@@ -58,12 +58,14 @@ def geometric_mean_average_precision(rels):
   Returns [int]:
     geometric mean average precision
   """
-  avps = [np.log(average_precision(rel)) for rel in rels]
+  with np.errstate(divide='ignore'):
+    avps = [np.log(average_precision(rel)) for rel in rels]
   return np.exp(np.mean(avps))
 
 def kendall_tau(rankA, rankB):
   """
-  Compute Kendall's tau for two ranked lists (no ties).
+  Compute Kendall's tau for two ranked lists.
+  Uses the `kendalltau` function from the `scipy` Python libary.
 
   Args:
     rankA = [[str]] ranked list of document identifiers
@@ -81,7 +83,6 @@ def kendall_tau(rankA, rankB):
     dictB[rankB[k]] = k
   A = [rank for _, rank in sorted(dictA.items())]
   B = [rank for _, rank in sorted(dictB.items())]
-  print(A,B)
   return kendalltau(A, B)  
 
 if __name__ == "__main__":
