@@ -1,3 +1,7 @@
+"""
+A script that normalizes and tokenizes queries from a test collection.
+"""
+
 import re, string
 from nltk.corpus import stopwords
 
@@ -6,8 +10,8 @@ stop_words = set(stopwords.words('english'))
 re_punct = re.compile('[%s]' % re.escape(string.punctuation))
 re_split = re.compile(r'[\-\/]')
 
-fname_in = 'queries.orig.txt'
-fname_out = 'test_queries.csv'
+fname_in = 'data/queries.orig.txt'
+fname_out = 'data/test_queries.csv'
 with open(fname_in, 'r') as input_file, open(fname_out, 'w') as output_file:
     for line in input_file:
         query_id, full_query = line.split('|')
