@@ -15,6 +15,20 @@ def precision_at_k(rel, k):
   assert k >= 1 and k <= len(rel), "Invalid depth k."
   return np.mean(rel[:k])
 
+def mean_precision_at_k(rels, k):
+  """
+  Compute the mean precision@k from multiple ranked lists.
+
+  Args:
+    rels = [[[int]]] collection of ranked lists
+    k    = [int] depth at which to compute the precision
+
+  Returns [int]:
+    mean precision@k
+  """
+  precisions = [precision_at_k(rel, k) for rel in rels]
+  return np.mean(precisions)
+
 def average_precision(rel):
   """
   Compute the average precision of a ranked list.
@@ -108,3 +122,5 @@ if __name__ == "__main__":
   rankA = ['D', 'E', 'B', 'A', 'C']
   rankB = ['B', 'C', 'A', 'D', 'E']
   print(kendall_tau(rankA, rankB))
+  # Testing mean precision@k
+  print(mean_precision_at_k(rels, 5))
