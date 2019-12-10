@@ -15,6 +15,16 @@ def precision_at_k(rel, k):
   assert k >= 1 and k <= len(rel), "Invalid depth k."
   return np.mean(rel[:k])
 
+def precision_at_k_wrapper(rel, k):
+  """
+  Wrapper for `precision_at_k(rel, k)` that adds zeros
+  to the relevance judgements collection up to `k`.
+  """
+  if k > len(rel):
+    zeros = np.zeros(k - len(rel))
+    rel = np.concatenate((rel, zeros))
+  return precision_at_k(rel, k)
+
 def mean_precision_at_k(rels, k):
   """
   Compute the mean precision@k from multiple ranked lists.
@@ -129,4 +139,6 @@ if __name__ == "__main__":
   rankB = ['B', 'C', 'A', 'D', 'E']
   print(kendall_tau(rankA, rankB))
   # Testing mean precision@k
-  print(mean_precision_at_k(rels, 5))
+  print("mean P@k =", mean_precision_at_k(rels, 5))
+  # Testing precision@k wrapper
+  print("P@k wrapper =", precision_at_k_wrapper(rel, 20))
