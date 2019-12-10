@@ -36,7 +36,7 @@ def mean_precision_at_k(rels, k):
   Returns [int]:
     mean precision@k
   """
-  precisions = [precision_at_k(rel, k) for rel in rels]
+  precisions = [precision_at_k_wrapper(rel, k) for rel in rels]
   return np.mean(precisions)
 
 def average_precision(rel, num_rel_docs):
