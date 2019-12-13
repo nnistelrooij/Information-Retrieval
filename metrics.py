@@ -15,6 +15,16 @@ def precision_at_k(rel, k):
   assert k >= 1 and k <= len(rel), "Invalid depth k."
   return np.mean(rel[:k])
 
+def precision_at_k_wrapper(rel, k):
+  """
+  Wrapper for `precision_at_k(rel, k)` that adds zeros
+  to the relevance judgements collection up to `k`.
+  """
+  if k > len(rel):
+    zeros = np.zeros(k - len(rel))
+    rel = np.concatenate((rel, zeros))
+  return precision_at_k(rel, k)
+
 def mean_precision_at_k(rels, k):
   """
   Compute the mean precision@k from multiple ranked lists.
@@ -26,24 +36,25 @@ def mean_precision_at_k(rels, k):
   Returns [int]:
     mean precision@k
   """
-  precisions = [precision_at_k(rel, k) for rel in rels]
+  precisions = [precision_at_k_wrapper(rel, k) for rel in rels]
   return np.mean(precisions)
 
-def average_precision(rel):
+def average_precision(rel, num_rel_docs):
   """
   Compute the average precision of a ranked list.
   The precision@k is 0 when the k-th element is non-relevant.
   From Zhai & Massung Chapter 9, page 177.
 
   Args:
-    rel = [[int]] relevance judgements for the ranked list
+    rel           = [[int]] relevance judgements for the ranked list
+    num_rel_docs  = [int] number of all relevant documents in the collection
 
   Returns [int]:
     average precision
   """
   N = len(rel)
   precisions = [precision_at_k(rel, k) for k in np.arange(1, N+1) if rel[k-1]]
-  avp = np.sum(precisions) / N
+  avp = np.sum(precisions) / num_rel_docs
   return avp
 
 def mean_average_precision(rels):
@@ -52,12 +63,13 @@ def mean_average_precision(rels):
   From Zhai & Massung Chapter 9, page 178.
 
   Args:
-    rels = [[[int]]] collection of ranked lists
+    rels = [[tuple]] collection of tuples in the form 
+                     (collection of ranked lists, number of all relevant documents in the collection)
 
   Returns [int]:
     mean average precision
   """
-  avps = [average_precision(rel) for rel in rels]
+  avps = [average_precision(rel, num_rel_docs) for rel, num_rel_docs in rels]
   return np.mean(avps)
 
 def geometric_mean_average_precision(rels):
@@ -67,13 +79,14 @@ def geometric_mean_average_precision(rels):
   From Zhai & Massung Chapter 9, page 179.
 
   Args:
-    rels = [[[int]]] collection of ranked lists
+    rels = [[tuple]] collection of tuples in the form 
+                     (collection of ranked lists, number of all relevant documents in the collection)
 
   Returns [int]:
     geometric mean average precision
   """
   with np.errstate(divide='ignore'):
-    avps = [np.log(average_precision(rel)) for rel in rels]
+    avps = [np.log(average_precision(rel, num_rel_docs)) for rel, num_rel_docs in rels]
   return np.exp(np.mean(avps))
 
 def kendall_tau(rankA, rankB):
@@ -102,19 +115,21 @@ def kendall_tau(rankA, rankB):
 if __name__ == "__main__":
   # Example from Zhai & Massung Chapter 9, p.174
   # Testing precision@k
-  rel = [1, 1, 0, 0, 1, 0, 0, 1, 0, 0]
+  rel = [1, 1, 0, 0, 1, 0, 0, 1]
   result = [precision_at_k(rel, k) for k in np.arange(1, len(rel)+1)]
   print("P@k:", result)
   # Testing average precision
-  avp = average_precision(rel)
+  avp = average_precision(rel, 10)
   print("AP =", avp)
   # Testing MAP and gMAP (no reference answer though)
+  rel1 = [1, 0, 1, 0, 1, 0, 0, 1, 0, 0]
   rel2 = [1, 1, 0, 1, 0, 0, 1, 1, 0, 0]
   rel3 = [0, 0, 1, 1, 0, 1, 0, 1, 0, 1]
   rel4 = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-  rels = [rel, rel2, rel3, rel4]
-  print("MAP =", mean_average_precision(rels))
-  print("gMAP =", geometric_mean_average_precision(rels))
+  rels = [rel1, rel2, rel3, rel4]
+  num_rel_doc = [10, 8, 8, 12]
+  print("MAP =", mean_average_precision(zip(rels, num_rel_doc)))
+  print("gMAP =", geometric_mean_average_precision(zip(rels, num_rel_doc)))
   # Testing Kendall's tau (no reference answer though)
   # Some bogus ranked lists:
   # rankA = ['LET-02', 'SEM-31', 'SEM-25', 'LIT-12', 'FUN-42']
@@ -124,4 +139,6 @@ if __name__ == "__main__":
   rankB = ['B', 'C', 'A', 'D', 'E']
   print(kendall_tau(rankA, rankB))
   # Testing mean precision@k
-  print(mean_precision_at_k(rels, 5))
+  print("mean P@k =", mean_precision_at_k(rels, 5))
+  # Testing precision@k wrapper
+  print("P@k wrapper =", precision_at_k_wrapper(rel, 20))
